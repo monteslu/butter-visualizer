@@ -1,0 +1,182 @@
+{
+  "name": "butter-visualizer",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Multi-window audio-reactive visualization application",
+  "main": "src/main/main.js",
+  "homepage": "./",
+  "scripts": {
+    "start": "electron . --no-sandbox",
+    "setup": "bash scripts/setup-dev.sh",
+    "dev": "bash scripts/setup-dev.sh && bash scripts/dev.sh",
+    "dev:clean": "bash scripts/clean-start.sh",
+    "dev:renderer": "vite --config src/renderer/vite.config.js",
+    "dev:popup": "vite --config src/popup/vite.config.js --port 5175",
+    "build": "npm run build:all && electron-builder && node scripts/rename-artifacts.js",
+    "build:all": "npm run build:renderer && npm run build:popup && npm run copy:libs",
+    "build:renderer": "vite build --config src/renderer/vite.config.js",
+    "build:popup": "vite build --config src/popup/vite.config.js",
+    "copy:libs": "cp src/lib/*.js src/renderer/dist/ && cp src/lib/*.js src/popup/dist/",
+    "build:linux": "npm run build:all && electron-builder --linux && node scripts/rename-artifacts.js",
+    "build:win": "npm run build:all && electron-builder --win && node scripts/rename-artifacts.js",
+    "build:mac": "npm run build:all && electron-builder --mac && node scripts/rename-artifacts.js",
+    "rebuild": "electron-rebuild",
+    "postinstall": "electron-builder install-app-deps",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,json,css,md}\"",
+    "prepare": "husky"
+  },
+  "keywords": [
+    "visualization",
+    "audio",
+    "electron",
+    "butterchurn",
+    "webrtc"
+  ],
+  "author": "Butter Visualizer Team",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "butterchurn": "^2.6.7",
+    "butterchurn-presets": "^2.4.7",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.37.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/ui": "^3.2.4",
+    "autoprefixer": "^10.4.21",
+    "electron": "^38.2.0",
+    "electron-builder": "^26.0.12",
+    "eslint": "^9.37.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "globals": "^16.4.0",
+    "happy-dom": "^20.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.4",
+    "postcss": "^8.5.6",
+    "prettier": "^3.6.2",
+    "tailwindcss": "^3.4.18",
+    "vite": "^7.1.9",
+    "vitest": "^3.2.4"
+  },
+  "build": {
+    "appId": "com.buttervisualizer.app",
+    "productName": "ButterVisualizer",
+    "publish": {
+      "provider": "github",
+      "releaseType": "release"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "static/**/*",
+      "node_modules/**/*",
+      "!src/**/node_modules",
+      "!src/**/src"
+    ],
+    "icon": "static/images/icon.png",
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "static/images/icon.png",
+      "category": "AudioVideo",
+      "desktop": {
+        "entry": {
+          "Name": "Butter Visualizer",
+          "Comment": "Multi-window audio-reactive visualizations",
+          "Categories": "AudioVideo;Audio;Visualization;"
+        }
+      },
+      "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "static/images/icon.png",
+      "artifactName": "${productName}-${version}-windows-${arch}.${ext}"
+    },
+    "nsis": {
+      "differentialPackage": false,
+      "artifactName": "${productName}-${version}-windows-${arch}-installer.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-windows-${arch}-portable.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "static/images/icon.png",
+      "artifactName": "${productName}-${version}-macos-${arch}.${ext}",
+      "identity": null
+    },
+    "dmg": {
+      "writeUpdateInfo": false
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.test.{js,jsx}": [
+      "vitest related --run"
+    ],
+    "src/**/*.{json,css,md}": [
+      "prettier --write"
+    ]
+  }
+}
