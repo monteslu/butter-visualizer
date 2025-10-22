@@ -1,5 +1,7 @@
 # Butter Visualizer
 
+![Butter Visualizer](butter_visualizer.png)
+
 Multi-window audio-reactive visualization application powered by Butterchurn.
 
 ## Features
