@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Butter Visualizer
+Comment=Multi-window audio-reactive visualizations
+Exec=butter-visualizer
+Icon=com.buttervisualizer.app
+Type=Application
+Categories=AudioVideo;Audio;Visualization;
+Keywords=visualization;audio;butterchurn;webgl;music;
+StartupNotify=true
+Terminal=false

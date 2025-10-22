@@ -1,6 +1,6 @@
 {
   "name": "butter-visualizer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "Multi-window audio-reactive visualization application",
   "main": "src/main/main.js",
@@ -92,6 +92,8 @@
       "src/**/*",
       "static/**/*",
       "node_modules/**/*",
+      "com.buttervisualizer.app.desktop",
+      "com.buttervisualizer.app.metainfo.xml",
       "!src/**/node_modules",
       "!src/**/src"
     ],

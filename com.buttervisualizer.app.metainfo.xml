@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.buttervisualizer.app</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>AGPL-3.0</project_license>
+  <name>Butter Visualizer</name>
+  <summary>Multi-window audio-reactive visualization application</summary>
+
+  <description>
+    <p>
+      Butter Visualizer is a powerful audio visualization application powered by Butterchurn.
+      Create unlimited popup windows with independent visualizations, capture live microphone
+      audio, and stream to multiple displays with low-latency WebRTC audio streaming.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Multi-window visualizations with independent Butterchurn presets</li>
+      <li>Live microphone audio capture</li>
+      <li>WebRTC audio-only streaming to visualization windows</li>
+      <li>200+ Butterchurn presets with visual thumbnails</li>
+      <li>Dark mode UI</li>
+      <li>Remote control via REST API and Socket.IO</li>
+      <li>Cross-platform support</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">com.buttervisualizer.app.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>Butter Visualizer with multiple visualization windows</caption>
+      <image>ButterVisualizer_app.png</image>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://github.com/monteslu/butter-visualizer</url>
+  <url type="bugtracker">https://github.com/monteslu/butter-visualizer/issues</url>
+  <url type="vcs-browser">https://github.com/monteslu/butter-visualizer</url>
+
+  <developer id="com.buttervisualizer">
+    <name>Butter Visualizer Team</name>
+  </developer>
+
+  <update_contact>https://github.com/monteslu/butter-visualizer</update_contact>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="1.0.1" date="2025-10-22">
+      <description>
+        <p>Build system improvements</p>
+        <ul>
+          <li>Added flatpak and AppImage builds for Linux</li>
+          <li>Added GitHub Actions CI/CD pipeline</li>
+          <li>Improved cross-platform build consistency</li>
+        </ul>
+      </description>
+    </release>
+    <release version="1.0.0" date="2025-10-22">
+      <description>
+        <p>Initial release</p>
+        <ul>
+          <li>Multi-window audio-reactive visualizations</li>
+          <li>200+ Butterchurn presets</li>
+          <li>Live microphone input support</li>
+          <li>WebRTC audio streaming</li>
+          <li>Remote control API</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+  </categories>
+
+  <keywords>
+    <keyword>visualization</keyword>
+    <keyword>audio</keyword>
+    <keyword>butterchurn</keyword>
+    <keyword>webgl</keyword>
+    <keyword>music</keyword>
+  </keywords>
+</component>
