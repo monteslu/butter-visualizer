@@ -1,0 +1,221 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux-x64:
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install build tools
+        run: dnf install -y make gcc gcc-c++ python3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build renderer UI
+        run: npm run build:renderer
+
+      - name: Build popup UI
+        run: npm run build:popup
+
+      - name: Setup Flatpak remotes and Electron base
+        run: |
+          echo "Adding Flathub remote..."
+          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          echo "Installing Electron base app (x64)..."
+          flatpak install -y flathub org.electronjs.Electron2.BaseApp/x86_64/24.08
+
+      - name: Build Linux x64 AppImage
+        run: npx electron-builder --linux AppImage --x64 && node scripts/rename-artifacts.js
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Linux x64 Flatpak
+        run: npx electron-builder --linux flatpak --x64 && node scripts/rename-artifacts.js
+        timeout-minutes: 45
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Linux x64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64-builds
+          path: |
+            dist/*.AppImage
+            dist/*.flatpak
+          if-no-files-found: warn
+          retention-days: 7
+
+  build-linux-arm64:
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install QEMU for ARM64 builds
+        run: |
+          dnf install -y qemu-user-static
+
+      - name: Install build tools
+        run: dnf install -y make gcc gcc-c++ python3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build renderer UI
+        run: npm run build:renderer
+
+      - name: Build popup UI
+        run: npm run build:popup
+
+      - name: Setup Flatpak remotes and Electron base
+        run: |
+          echo "Adding Flathub remote..."
+          flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          echo "Installing arm64 Platform runtime..."
+          flatpak install -y flathub org.freedesktop.Platform/aarch64/24.08 || echo "Platform already installed"
+          echo "Installing arm64 SDK..."
+          flatpak install -y flathub org.freedesktop.Sdk/aarch64/24.08
+          echo "Installing Electron base app (arm64)..."
+          flatpak install -y flathub org.electronjs.Electron2.BaseApp/aarch64/24.08
+
+      - name: Build Linux arm64 AppImage
+        run: npx electron-builder --linux AppImage --arm64 && node scripts/rename-artifacts.js
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Linux arm64 Flatpak
+        run: npx electron-builder --linux flatpak --arm64 && node scripts/rename-artifacts.js
+        timeout-minutes: 45
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Linux arm64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64-builds
+          path: |
+            dist/*.AppImage
+            dist/*.flatpak
+          if-no-files-found: warn
+          retention-days: 7
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build renderer UI
+        run: npm run build:renderer
+
+      - name: Build popup UI
+        run: npm run build:popup
+
+      - name: Build Windows
+        run: npm run build:win
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-builds
+          path: dist/*.exe
+          retention-days: 7
+
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build renderer UI
+        run: npm run build:renderer
+
+      - name: Build popup UI
+        run: npm run build:popup
+
+      - name: Build macOS
+        run: npm run build:mac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-builds
+          path: dist/*.dmg
+          retention-days: 7
+
+  release:
+    needs: [build-linux-x64, build-linux-arm64, build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/linux-x64-builds/*
+            artifacts/linux-arm64-builds/*
+            artifacts/windows-builds/*
+            artifacts/macos-builds/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

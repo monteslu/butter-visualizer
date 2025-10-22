@@ -1,6 +1,6 @@
 {
   "name": "butter-visualizer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Multi-window audio-reactive visualization application",
   "main": "src/main/main.js",
@@ -106,7 +106,7 @@
           ]
         },
         {
-          "target": "deb",
+          "target": "flatpak",
           "arch": [
             "x64",
             "arm64"
@@ -123,6 +123,37 @@
         }
       },
       "artifactName": "${productName}-${version}-linux-${arch}.${ext}"
+    },
+    "flatpak": {
+      "runtime": "org.freedesktop.Platform",
+      "runtimeVersion": "24.08",
+      "sdk": "org.freedesktop.Sdk",
+      "base": "org.electronjs.Electron2.BaseApp",
+      "baseVersion": "24.08",
+      "files": [
+        [
+          "com.buttervisualizer.app.metainfo.xml",
+          "/share/metainfo/com.buttervisualizer.app.metainfo.xml"
+        ],
+        [
+          "static/images/icon.png",
+          "/share/icons/hicolor/512x512/apps/com.buttervisualizer.app.png"
+        ],
+        [
+          "ButterVisualizer_app.png",
+          "/share/app-info/media/com.buttervisualizer.app.png"
+        ]
+      ],
+      "finishArgs": [
+        "--socket=wayland",
+        "--socket=x11",
+        "--share=ipc",
+        "--device=dri",
+        "--socket=pulseaudio",
+        "--filesystem=home",
+        "--share=network",
+        "--talk-name=org.freedesktop.Notifications"
+      ]
     },
     "win": {
       "target": [

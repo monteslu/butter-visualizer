@@ -23,6 +23,12 @@ async function renameArtifacts() {
     const files = await readdir(distDir);
 
     for (const file of files) {
+      // Skip flatpak files - they already use x86_64/aarch64
+      if (file.includes('.flatpak')) {
+        console.log(`Skipped (already correct): ${file}`);
+        continue;
+      }
+
       let newName = file;
 
       // Replace arch names
