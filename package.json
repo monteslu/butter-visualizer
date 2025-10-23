@@ -1,6 +1,6 @@
 {
   "name": "butter-visualizer",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "type": "module",
   "description": "Multi-window audio-reactive visualization application",
   "main": "src/main/main.js",
@@ -138,7 +138,7 @@
           "/share/metainfo/com.buttervisualizer.app.metainfo.xml"
         ],
         [
-          "static/images/icon.png",
+          "resources/icon-512.png",
           "/share/icons/hicolor/512x512/apps/com.buttervisualizer.app.png"
         ]
       ],
@@ -190,7 +190,13 @@
       ],
       "icon": "static/images/icon.png",
       "artifactName": "${productName}-${version}-macos-${arch}.${ext}",
-      "identity": null
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": {
+        "teamId": "6LPKSNV8B2"
+      }
     },
     "dmg": {
       "writeUpdateInfo": false
