@@ -1,6 +1,6 @@
 {
   "name": "butter-visualizer",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "type": "module",
   "description": "Multi-window audio-reactive visualization application",
   "main": "src/main/main.js",
@@ -140,10 +140,6 @@
         [
           "static/images/icon.png",
           "/share/icons/hicolor/512x512/apps/com.buttervisualizer.app.png"
-        ],
-        [
-          "ButterVisualizer_app.png",
-          "/share/app-info/media/com.buttervisualizer.app.png"
         ]
       ],
       "finishArgs": [
