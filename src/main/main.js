@@ -84,6 +84,14 @@ class ButterVisualizerApp {
       }
     });
 
+    this.expressServer.on('browser-client:closed', (clientId) => {
+      // Notify dashboard that a browser client has disconnected
+      console.log(`Browser client ${clientId} closed, notifying renderer`);
+      if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+        this.mainWindow.webContents.send('window:closed', { windowId: clientId });
+      }
+    });
+
     this.expressServer.on('get-status', () => {
       return {
         windowCount: this.windowManager.getAllWindowIds().length,

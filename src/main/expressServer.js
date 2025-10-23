@@ -254,7 +254,10 @@ export class ExpressServer {
             this.audioDataClients.delete(clientId);
             console.log(`Visualization client left: ${clientId}`);
 
-            // Broadcast that this browser client has closed
+            // Notify main process so it can broadcast to renderer
+            this.emit('browser-client:closed', clientId);
+
+            // Also broadcast via Socket.IO for other connected clients
             this.io.emit('window:closed', { windowId: clientId });
             break;
           }

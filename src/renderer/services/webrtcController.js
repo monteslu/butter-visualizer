@@ -4,9 +4,10 @@ import { WEBRTC_CONFIG } from '../../shared/constants.js';
  * WebRTCController - Manages WebRTC connections to popup windows
  */
 export class WebRTCController {
-  constructor(microphoneManager) {
+  constructor(microphoneManager, onConnectionClosed = null) {
     this.microphoneManager = microphoneManager;
     this.connections = new Map(); // windowId -> RTCPeerConnection
+    this.onConnectionClosed = onConnectionClosed; // Callback when connection fails/closes
   }
 
   /**
@@ -137,8 +138,23 @@ export class WebRTCController {
 
       // Handle connection state changes
       pc.onconnectionstatechange = () => {
-        if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+        console.log(`WebRTC connection state for ${windowId}:`, pc.connectionState);
+
+        if (pc.connectionState === 'failed' || pc.connectionState === 'closed' || pc.connectionState === 'disconnected') {
+          console.log(`WebRTC connection ${pc.connectionState} for window ${windowId}, cleaning up`);
+
+          // Clean up interval if it exists
+          if (pc.audioChannelInterval) {
+            clearInterval(pc.audioChannelInterval);
+            pc.audioChannelInterval = null;
+          }
+
           this.connections.delete(windowId);
+
+          // Notify that this connection is dead
+          if (this.onConnectionClosed) {
+            this.onConnectionClosed(windowId);
+          }
         }
       };
 

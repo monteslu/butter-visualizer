@@ -6,7 +6,15 @@ import Dashboard from './components/Dashboard.jsx';
 
 // Initialize services
 const microphoneManager = new MicrophoneManager();
-const webrtcController = new WebRTCController(microphoneManager);
+
+// Callback for when WebRTC connection closes
+const handleConnectionClosed = (windowId) => {
+  console.log(`WebRTC connection closed for window ${windowId}, notifying main process`);
+  // Trigger window closed event via IPC
+  window.electronAPI.notifyWindowClosed(windowId);
+};
+
+const webrtcController = new WebRTCController(microphoneManager, handleConnectionClosed);
 const visualizationController = new VisualizationController(webrtcController);
 
 function App() {

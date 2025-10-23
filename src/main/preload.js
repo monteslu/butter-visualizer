@@ -61,6 +61,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   closeWindow: (windowId) => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_CLOSE, windowId),
   closeAllWindows: () => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_CLOSE_ALL),
   getWindows: () => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_LIST),
+  notifyWindowClosed: (windowId) => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSED, { windowId }),
 
   // Preset Management
   setPreset: (windowId, preset) =>
