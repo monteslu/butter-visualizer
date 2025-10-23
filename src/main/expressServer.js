@@ -344,56 +344,71 @@ export class ExpressServer {
    */
   start() {
     return new Promise((resolve, reject) => {
-      try {
-        // In dev mode, proxy WebSocket connections to Vite for HMR
-        if (this.isDev) {
-          this.httpServer.on('upgrade', (req, socket, head) => {
-            // Check if this is a Vite HMR WebSocket (not Socket.IO)
-            if (req.url && !req.url.includes('socket.io')) {
-              console.log('[WebSocket] Proxying Vite HMR:', req.url);
+      const tryPort = (portToTry) => {
+        try {
+          // In dev mode, proxy WebSocket connections to Vite for HMR
+          if (this.isDev) {
+            this.httpServer.on('upgrade', (req, socket, head) => {
+              // Check if this is a Vite HMR WebSocket (not Socket.IO)
+              if (req.url && !req.url.includes('socket.io')) {
+                console.log('[WebSocket] Proxying Vite HMR:', req.url);
 
-              // Create WebSocket connection to Vite
-              const proxyReq = httpRequest({
-                hostname: 'localhost',
-                port: this.devServerPort,
-                path: req.url,
-                headers: req.headers,
-                method: req.method,
-              });
-
-              proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
-                // Relay the upgrade response
-                socket.write(`HTTP/1.1 ${proxyRes.statusCode} ${proxyRes.statusMessage}\r\n`);
-                proxyRes.rawHeaders.forEach((value, index) => {
-                  if (index % 2 === 0) {
-                    socket.write(`${value}: ${proxyRes.rawHeaders[index + 1]}\r\n`);
-                  }
+                // Create WebSocket connection to Vite
+                const proxyReq = httpRequest({
+                  hostname: 'localhost',
+                  port: this.devServerPort,
+                  path: req.url,
+                  headers: req.headers,
+                  method: req.method,
                 });
-                socket.write('\r\n');
 
-                // Pipe data between client and Vite
-                proxySocket.pipe(socket);
-                socket.pipe(proxySocket);
-              });
+                proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
+                  // Relay the upgrade response
+                  socket.write(`HTTP/1.1 ${proxyRes.statusCode} ${proxyRes.statusMessage}\r\n`);
+                  proxyRes.rawHeaders.forEach((value, index) => {
+                    if (index % 2 === 0) {
+                      socket.write(`${value}: ${proxyRes.rawHeaders[index + 1]}\r\n`);
+                    }
+                  });
+                  socket.write('\r\n');
 
-              proxyReq.on('error', (err) => {
-                console.error('[WebSocket] Proxy error:', err.message);
-                socket.destroy();
-              });
+                  // Pipe data between client and Vite
+                  proxySocket.pipe(socket);
+                  socket.pipe(proxySocket);
+                });
 
-              proxyReq.end();
+                proxyReq.on('error', (err) => {
+                  console.error('[WebSocket] Proxy error:', err.message);
+                  socket.destroy();
+                });
+
+                proxyReq.end();
+              }
+            });
+          }
+
+          this.httpServer.listen(portToTry, () => {
+            this.port = portToTry;
+            this.isRunning = true;
+            console.log(`Server running on http://localhost:${this.port}`);
+            resolve();
+          });
+
+          this.httpServer.on('error', (error) => {
+            if (error.code === 'EADDRINUSE') {
+              console.log(`Port ${portToTry} in use, trying ${portToTry + 1}...`);
+              this.httpServer.removeAllListeners('error');
+              tryPort(portToTry + 1);
+            } else {
+              reject(error);
             }
           });
+        } catch (error) {
+          reject(error);
         }
+      };
 
-        this.httpServer.listen(this.port, () => {
-          this.isRunning = true;
-          console.log(`Server running on http://localhost:${this.port}`);
-          resolve();
-        });
-      } catch (error) {
-        reject(error);
-      }
+      tryPort(this.port);
     });
   }
 

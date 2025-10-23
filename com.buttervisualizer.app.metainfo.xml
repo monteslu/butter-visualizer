@@ -26,6 +26,13 @@
 
   <launchable type="desktop-id">com.buttervisualizer.app.desktop</launchable>
 
+  <screenshots>
+    <screenshot type="default">
+      <caption>Butter Visualizer with multiple visualization windows</caption>
+      <image>https://raw.githubusercontent.com/monteslu/butter-visualizer/main/butter_visualizer.png</image>
+    </screenshot>
+  </screenshots>
+
   <url type="homepage">https://github.com/monteslu/butter-visualizer</url>
   <url type="bugtracker">https://github.com/monteslu/butter-visualizer/issues</url>
   <url type="vcs-browser">https://github.com/monteslu/butter-visualizer</url>
