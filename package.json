@@ -1,6 +1,6 @@
 {
   "name": "butter-visualizer",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "type": "module",
   "description": "Multi-window audio-reactive visualization application",
   "main": "src/main/main.js",
@@ -88,6 +88,11 @@
     "directories": {
       "output": "dist"
     },
+    "asarUnpack": [
+      "src/renderer/dist/**/*",
+      "src/popup/dist/**/*",
+      "static/**/*"
+    ],
     "files": [
       "src/**/*",
       "static/**/*",
