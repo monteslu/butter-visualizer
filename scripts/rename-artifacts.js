@@ -29,6 +29,12 @@ async function renameArtifacts() {
         continue;
       }
 
+      // Skip macOS files - keep original names
+      if (file.includes('macos')) {
+        console.log(`Skipped (macOS): ${file}`);
+        continue;
+      }
+
       let newName = file;
 
       // Replace arch names
