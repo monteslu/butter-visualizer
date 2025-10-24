@@ -1,6 +1,5 @@
 import express from 'express';
 import { createServer } from 'http';
-import { request as httpRequest } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
@@ -13,10 +12,8 @@ const __dirname = dirname(__filename);
  * ExpressServer - Built-in web server for remote control
  */
 export class ExpressServer {
-  constructor(port = 4069, isDev = false, devServerPort = 5173) {
+  constructor(port = 4069) {
     this.port = port;
-    this.isDev = isDev;
-    this.devServerPort = devServerPort;
     this.app = express();
     this.httpServer = createServer(this.app);
     this.io = new SocketIOServer(this.httpServer, {
@@ -37,115 +34,34 @@ export class ExpressServer {
   }
 
   setupRoutes() {
-    console.log('ExpressServer setupRoutes - isDev:', this.isDev, 'devServerPort:', this.devServerPort);
-
-    // Debug middleware - log all requests
-    this.app.use((req, res, next) => {
-      console.log(`[Request] ${req.method} ${req.url}`);
-      next();
+    // Serve built files (same in dev and production)
+    this.app.get('/renderer/', (req, res) => {
+      res.sendFile(join(__dirname, '../renderer/dist/index.html'));
     });
 
-    // In dev mode, proxy everything to Vite dev server
-    if (this.isDev) {
-      // Helper function to proxy requests to Vite
-      const proxyToVite = async (req, res, vitePathPrefix = null) => {
-        // If vitePathPrefix is provided, reconstruct the path (for /renderer and /popup)
-        // Otherwise, use originalUrl to preserve the full path (for @vite routes)
-        const fullPath = vitePathPrefix !== null ? `${vitePathPrefix}${req.url}` : req.originalUrl;
-        const viteUrl = `http://localhost:${this.devServerPort}${fullPath}`;
-        console.log(`[Proxy] ${req.method} ${req.originalUrl} → ${viteUrl}`);
+    this.app.get('/popup', (req, res) => {
+      res.sendFile(join(__dirname, '../popup/dist/popup.html'));
+    });
 
-        try {
-          const response = await fetch(viteUrl, {
-            method: req.method,
-            headers: req.headers,
-          });
+    // Serve /assets from both renderer and popup (try both, first one wins)
+    // This works because renderer and popup have different bundle names
+    this.app.use(
+      '/assets',
+      express.static(join(__dirname, '../renderer/dist/assets')),
+      express.static(join(__dirname, '../popup/dist/assets'))
+    );
 
-          res.status(response.status);
-          response.headers.forEach((value, key) => {
-            res.setHeader(key, value);
-          });
+    // Serve butterchurn libs at root (shared by both renderer and popup)
+    this.app.get('/butterchurn.min.js', (req, res) => {
+      res.sendFile(join(__dirname, '../renderer/dist/butterchurn.min.js'));
+    });
+    this.app.get('/butterchurnPresets.min.js', (req, res) => {
+      res.sendFile(join(__dirname, '../renderer/dist/butterchurnPresets.min.js'));
+    });
 
-          // Use arrayBuffer for binary data (fonts, images), convert to Buffer
-          const buffer = Buffer.from(await response.arrayBuffer());
-          res.send(buffer);
-          console.log(`[Proxy] ${response.status} for ${req.originalUrl}`);
-        } catch (error) {
-          console.error('[Proxy] Error:', error.message, 'for', req.originalUrl);
-          res.status(502).send('Vite dev server error');
-        }
-      };
-
-      // Proxy /renderer (needs path reconstruction)
-      this.app.use('/renderer', (req, res) => proxyToVite(req, res, '/renderer'));
-
-      // Proxy /popup - map /popup to /popup/popup.html for cleaner URLs
-      this.app.get('/popup', (req, res) => {
-        const viteUrl = `http://localhost:${this.devServerPort}/popup/popup.html`;
-        console.log(`[Proxy] GET /popup → ${viteUrl}`);
-
-        fetch(viteUrl, { method: req.method, headers: req.headers })
-          .then(async (response) => {
-            res.status(response.status);
-            response.headers.forEach((value, key) => res.setHeader(key, value));
-            const buffer = Buffer.from(await response.arrayBuffer());
-            res.send(buffer);
-          })
-          .catch((error) => {
-            console.error('[Proxy] Error:', error.message);
-            res.status(502).send('Vite dev server error');
-          });
-      });
-
-      // Proxy other /popup/* requests (like /popup/assets/...)
-      this.app.use('/popup', (req, res) => proxyToVite(req, res, '/popup'));
-
-      // Proxy Vite internals (use originalUrl to preserve @ prefix)
-      this.app.use(/^\/@vite/, (req, res) => proxyToVite(req, res)); // no prefix = use originalUrl
-      this.app.use(/^\/@react-refresh/, (req, res) => proxyToVite(req, res));
-      this.app.use(/^\/@fs/, (req, res) => proxyToVite(req, res));
-      this.app.use(/^\/@id/, (req, res) => proxyToVite(req, res));
-
-      // Proxy node_modules, src, and shared (use originalUrl)
-      this.app.use('/node_modules', (req, res) => proxyToVite(req, res));
-      this.app.use('/src', (req, res) => proxyToVite(req, res));
-      this.app.use('/shared', (req, res) => proxyToVite(req, res));
-
-      // Proxy root-level static files from Vite's public directory (use originalUrl)
-      this.app.get('/butterchurn.min.js', (req, res) => proxyToVite(req, res));
-      this.app.get('/butterchurnPresets.min.js', (req, res) => proxyToVite(req, res));
-      this.app.use('/butterchurn-screenshots', (req, res) => proxyToVite(req, res));
-      this.app.use('/fonts', (req, res) => proxyToVite(req, res));
-    } else {
-      // In production, serve built files
-      this.app.get('/renderer/', (req, res) => {
-        res.sendFile(join(__dirname, '../renderer/dist/index.html'));
-      });
-
-      this.app.get('/popup', (req, res) => {
-        res.sendFile(join(__dirname, '../popup/dist/popup.html'));
-      });
-
-      // Serve /assets from both renderer and popup (try both, first one wins)
-      // This works because renderer and popup have different bundle names
-      this.app.use(
-        '/assets',
-        express.static(join(__dirname, '../renderer/dist/assets')),
-        express.static(join(__dirname, '../popup/dist/assets'))
-      );
-
-      // Serve butterchurn libs at root (shared by both renderer and popup)
-      this.app.get('/butterchurn.min.js', (req, res) => {
-        res.sendFile(join(__dirname, '../renderer/dist/butterchurn.min.js'));
-      });
-      this.app.get('/butterchurnPresets.min.js', (req, res) => {
-        res.sendFile(join(__dirname, '../renderer/dist/butterchurnPresets.min.js'));
-      });
-
-      // Serve static assets at root (shared by both renderer and popup)
-      this.app.use('/butterchurn-screenshots', express.static(join(__dirname, '../renderer/dist/butterchurn-screenshots')));
-      this.app.use('/fonts', express.static(join(__dirname, '../renderer/dist/fonts')));
-    }
+    // Serve static assets at root (shared by both renderer and popup)
+    this.app.use('/butterchurn-screenshots', express.static(join(__dirname, '../../static/images/butterchurn-screenshots')));
+    this.app.use('/fonts', express.static(join(__dirname, '../../static/fonts')));
 
     this.app.get('/api/status', (req, res) => {
       const status = this.emit('get-status');
@@ -349,47 +265,6 @@ export class ExpressServer {
     return new Promise((resolve, reject) => {
       const tryPort = (portToTry) => {
         try {
-          // In dev mode, proxy WebSocket connections to Vite for HMR
-          if (this.isDev) {
-            this.httpServer.on('upgrade', (req, socket, head) => {
-              // Check if this is a Vite HMR WebSocket (not Socket.IO)
-              if (req.url && !req.url.includes('socket.io')) {
-                console.log('[WebSocket] Proxying Vite HMR:', req.url);
-
-                // Create WebSocket connection to Vite
-                const proxyReq = httpRequest({
-                  hostname: 'localhost',
-                  port: this.devServerPort,
-                  path: req.url,
-                  headers: req.headers,
-                  method: req.method,
-                });
-
-                proxyReq.on('upgrade', (proxyRes, proxySocket, proxyHead) => {
-                  // Relay the upgrade response
-                  socket.write(`HTTP/1.1 ${proxyRes.statusCode} ${proxyRes.statusMessage}\r\n`);
-                  proxyRes.rawHeaders.forEach((value, index) => {
-                    if (index % 2 === 0) {
-                      socket.write(`${value}: ${proxyRes.rawHeaders[index + 1]}\r\n`);
-                    }
-                  });
-                  socket.write('\r\n');
-
-                  // Pipe data between client and Vite
-                  proxySocket.pipe(socket);
-                  socket.pipe(proxySocket);
-                });
-
-                proxyReq.on('error', (err) => {
-                  console.error('[WebSocket] Proxy error:', err.message);
-                  socket.destroy();
-                });
-
-                proxyReq.end();
-              }
-            });
-          }
-
           this.httpServer.listen(portToTry, () => {
             this.port = portToTry;
             this.isRunning = true;

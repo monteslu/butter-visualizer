@@ -9,11 +9,9 @@ const __dirname = dirname(__filename);
  * WindowManager - Manages popup visualization windows
  */
 export class WindowManager {
-  constructor(isDev = false, devServerPort = 5173) {
+  constructor() {
     this.popupWindows = new Map(); // windowId -> BrowserWindow
     this.nextWindowId = 1;
-    this.isDev = isDev;
-    this.devServerPort = devServerPort;
     this.onWindowClosedCallback = null;
   }
 
@@ -44,10 +42,6 @@ export class WindowManager {
 
     // Load popup HTML - always through Express server
     popup.loadURL('http://localhost:4069/popup');
-
-    if (this.isDev) {
-      popup.webContents.openDevTools();
-    }
 
     // Store window reference
     this.popupWindows.set(windowId, popup);

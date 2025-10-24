@@ -5,7 +5,7 @@ import { WindowManager } from './windowManager.js';
 import { ExpressServer } from './expressServer.js';
 import { setupIpcHandlers } from './ipcHandlers.js';
 import SettingsManager from './settingsManager.js';
-import { DEV_SERVER_PORT, SERVER_PORT } from '../shared/config.js';
+import { SERVER_PORT } from '../shared/config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -16,9 +16,8 @@ const __dirname = dirname(__filename);
 class ButterVisualizerApp {
   constructor() {
     this.mainWindow = null;
-    this.isDev = !app.isPackaged;
-    this.windowManager = new WindowManager(this.isDev, DEV_SERVER_PORT);
-    this.expressServer = new ExpressServer(SERVER_PORT, this.isDev, DEV_SERVER_PORT);
+    this.windowManager = new WindowManager();
+    this.expressServer = new ExpressServer(SERVER_PORT);
     this.settingsManager = new SettingsManager();
   }
 
@@ -135,10 +134,6 @@ class ButterVisualizerApp {
     });
 
     this.mainWindow.loadURL(url);
-
-    if (this.isDev) {
-      this.mainWindow.webContents.openDevTools();
-    }
 
     // Handle window close
     this.mainWindow.on('closed', () => {
