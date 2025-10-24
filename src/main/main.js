@@ -16,7 +16,7 @@ const __dirname = dirname(__filename);
 class ButterVisualizerApp {
   constructor() {
     this.mainWindow = null;
-    this.isDev = process.env.NODE_ENV !== 'production';
+    this.isDev = !app.isPackaged;
     this.windowManager = new WindowManager(this.isDev, DEV_SERVER_PORT);
     this.expressServer = new ExpressServer(SERVER_PORT, this.isDev, DEV_SERVER_PORT);
     this.settingsManager = new SettingsManager();
